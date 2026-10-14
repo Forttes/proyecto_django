@@ -484,3 +484,36 @@ proyecto\_django/
 
 \- El comando `seed\_data` es idempotente: usa `get\_or\_create` para no duplicar datos.
 
+---
+
+## 📊 Matriz de evidencias — Pruebas Apidog
+
+Todas las pruebas fueron ejecutadas sobre el servidor local en `http://127.0.0.1:8000` con la base de datos poblada (2.038 registros). La colección exportada se encuentra en `apidog/Proyecto Django API.apidog.json`.
+
+| # | Método | Endpoint | Identidad | Estado esperado | Estado observado | Respuesta representativa |
+|---|---|---|---|---|---|---|
+| 1 | POST | `/api/token/` | admin_api | 200 | ✅ 200 | `{"access":"...","refresh":"..."}` |
+| 2 | POST | `/api/token/` | operador_api | 200 | ✅ 200 | `{"access":"...","refresh":"..."}` |
+| 3 | POST | `/api/token/` | sin_rol_api | 200 | ✅ 200 | `{"access":"...","refresh":"..."}` |
+| 4 | GET | `/api/empresas/` | admin_api | 200 | ✅ 200 | `{"count":5,"results":[...]}` |
+| 5 | GET | `/api/empresas/` | operador_api | 200 | ✅ 200 | `{"count":5,"results":[...]}` |
+| 6 | GET | `/api/empresas/` | sin_rol_api | 403 | ✅ 403 | `{"detail":"You do not have permission..."}` |
+| 7 | GET | `/api/empresas/` | sin token | 401 | ✅ 401 | `{"detail":"Authentication credentials were not provided."}` |
+| 8 | GET | `/api/empresas/99999/` | admin_api | 404 | ✅ 404 | `{"detail":"No Empresa matches the given query."}` |
+| 9 | POST | `/api/empresas/` | admin_api | 201 | ✅ 201 | `{"id":6,"nombre":"Empresa Creada por Apidog",...}` |
+| 10 | POST | `/api/empresas/` | operador_api | 403 | ✅ 403 | `{"detail":"You do not have permission..."}` |
+| 11 | POST | `/api/empresas/` | admin_api | 400 | ✅ 400 | `{"rut":["El RUT debe tener al menos 8 caracteres."]}` |
+| 12 | GET | `/api/ordenes/?page=2` | operador_api | 200 | ✅ 200 | `{"count":1000,"next":"...page=3","previous":".../","results":[...25 items]}` |
+
+### Cobertura de la matriz
+
+| Criterio evaluación | Casos | Estado |
+|---|---|---|
+| CRUD admin en modelo principal | 4, 8, 9, 11 | ✅ |
+| Solo lectura operador | 5, 12 | ✅ |
+| Denegación sin rol (403) | 6, 10 | ✅ |
+| Denegación sin token (401) | 7 | ✅ |
+| JWT obtener token | 1, 2, 3 | ✅ |
+| Validaciones (campo + relación) | 11 | ✅ |
+| ID inexistente (404) | 8 | ✅ |
+| Paginación (2 páginas) | 12 | ✅ |
